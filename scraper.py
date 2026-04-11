@@ -32,14 +32,18 @@ def _extract_post(raw: dict, subreddit: str) -> dict:
 def scrape_subreddits(subreddit_config: dict) -> list[dict]:
     """Scrape posts from configured subreddits via Reddit .json endpoints."""
     all_posts: list[dict] = []
-    headers = {"User-Agent": config.USER_AGENT}
+    headers = {
+        "User-Agent": config.USER_AGENT,
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5",
+    }
 
     for i, (subreddit, settings) in enumerate(subreddit_config.items()):
         if i > 0:
             time.sleep(config.REQUEST_DELAY_SECONDS)
 
         sort = settings.get("sort", "hot")
-        url = f"https://www.reddit.com/r/{subreddit}/{sort}.json"
+        url = f"https://old.reddit.com/r/{subreddit}/{sort}.json"
         params = {
             "limit": config.POST_LIMIT_PER_SUBREDDIT,
             "raw_json": 1,
