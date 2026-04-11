@@ -43,7 +43,7 @@ def scrape_subreddits(subreddit_config: dict) -> list[dict]:
             time.sleep(config.REQUEST_DELAY_SECONDS)
 
         sort = settings.get("sort", "hot")
-        url = f"https://old.reddit.com/r/{subreddit}/{sort}.json"
+        url = f"https://www.reddit.com/r/{subreddit}/{sort}.json"
         params = {
             "limit": config.POST_LIMIT_PER_SUBREDDIT,
             "raw_json": 1,

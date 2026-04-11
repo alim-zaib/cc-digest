@@ -32,7 +32,7 @@ KEYWORDS = [
 TIME_WINDOW_HOURS = 24
 POST_LIMIT_PER_SUBREDDIT = 25
 REQUEST_DELAY_SECONDS = 2
-USER_AGENT = "Mozilla/5.0 (compatible; ClaudeCodeDigest/1.0; +https://github.com/alim-zaib/cc-digest)"
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
 
 DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL", "")
 
