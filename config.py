@@ -6,12 +6,12 @@ SUBREDDITS = {
     "ClaudeCode": {
         "filter_mode": "all",
         "sort": "hot",
-        "min_score": 20,
+        "min_score": 200,
     },
     "ClaudeAI": {
         "filter_mode": "keyword",
         "sort": "hot",
-        "min_score": 50,
+        "min_score": 500,
     },
 }
 
