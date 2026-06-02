@@ -1,39 +1,60 @@
-"""Entry point — orchestrates the scrape → filter → format → post pipeline."""
+"""Entry point - orchestrates the scrape -> filter -> format -> post pipeline."""
 
-import json
 import logging
 import sys
 
-import config
-import scraper
-import filter as filter_mod
 import ai_summary
+import config
+import filter as filter_mod
 import formatter
 import poster
+import scraper
 
 logger = logging.getLogger("digest")
 
 
-def main() -> int:
-    """Run the full digest pipeline. Returns exit code."""
+def _setup_logging() -> None:
+    """Configure process logging for local runs and GitHub Actions."""
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
         stream=sys.stdout,
     )
 
+
+def main() -> int:
+    """Run the full digest pipeline. Returns exit code."""
+    _setup_logging()
+
+    try:
+        reddit = scraper.get_reddit_client()
+    except scraper.ScrapeFailedError as exc:
+        logger.error("%s", exc)
+        return 1
+
     if not config.DISCORD_WEBHOOK_URL:
-        logger.error("DISCORD_WEBHOOK_URL is not set — cannot post digest")
+        logger.error("DISCORD_WEBHOOK_URL is not set - cannot post digest")
         return 1
 
     # 1. Scrape
     logger.info("Scraping %d subreddits", len(config.SUBREDDITS))
-    posts = scraper.scrape_subreddits(config.SUBREDDITS)
-    logger.info("Scraped %d posts total", len(posts))
+    try:
+        posts = scraper.scrape_subreddits(config.SUBREDDITS, reddit=reddit)
+    except scraper.ScrapeFailedError as exc:
+        logger.error("%s", exc)
+        return 1
+
+    if posts:
+        logger.info("Reddit scraping succeeded: scraped %d posts total", len(posts))
+    else:
+        logger.info("Reddit scraping succeeded: scraped 0 posts total")
 
     # 2. Filter
     filtered = filter_mod.filter_posts(posts, config.SUBREDDITS)
-    logger.info("Filtered down to %d posts", len(filtered))
+    if filtered:
+        logger.info("Posts matched filters: %d posts", len(filtered))
+    else:
+        logger.info("No posts matched the filters; building a no-activity digest")
 
     # 3. AI enrichment (passthrough when disabled)
     ai_data = ai_summary.summarise(filtered)
@@ -48,19 +69,10 @@ def main() -> int:
     if success:
         logger.info("Digest posted successfully (%d posts)", len(filtered))
         return 0
-    else:
-        logger.error("Failed to post digest to Discord")
-        return 1
+
+    logger.error("Failed to post digest to Discord")
+    return 1
 
 
 if __name__ == "__main__":
-    try:
-        sys.exit(main())
-    except Exception as exc:
-        logging.basicConfig(
-            level=logging.INFO,
-            format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-            stream=sys.stdout,
-        )
-        logger.error("Unexpected error: %s", exc, exc_info=True)
-        sys.exit(1)
+    sys.exit(main())
